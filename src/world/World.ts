@@ -20,6 +20,7 @@ import type { ContactEquation } from '../equations/ContactEquation'
 import type { FrictionEquation } from '../equations/FrictionEquation'
 import type { Shape } from '../shapes/Shape'
 import type { Solver } from '../solver/Solver'
+import type { AddBodyEvent, BeginContactEvent, BeginShapeContactEvent, CollideEvent, EndContactEvent, EndShapeContactEvent, RemoveBodyEvent } from '../utils/EventTarget'
 
 export type WorldOptions = ConstructorParameters<typeof World>[0]
 
@@ -154,12 +155,12 @@ export class World extends EventTarget {
   /**
    * Dispatched after a body has been added to the world.
    */
-  addBodyEvent: { type: 'addBody'; body: Body | null }
+  addBodyEvent: AddBodyEvent
 
   /**
    * Dispatched after a body has been removed from the world.
    */
-  removeBodyEvent: { type: 'removeBody'; body: Body | null }
+  removeBodyEvent: RemoveBodyEvent
 
   idToBodyMap: { [id: number]: Body }
 
@@ -832,12 +833,6 @@ const World_step_postStepEvent = { type: 'postStep' as const }
 // Dispatched before the world steps forward in time.
 const World_step_preStepEvent = { type: 'preStep' as const }
 
-type CollideEvent = {
-  type: typeof Body.COLLIDE_EVENT_NAME
-  body: Body | null
-  contact: ContactEquation | null
-}
-
 const World_step_collideEvent: CollideEvent = {
   type: Body.COLLIDE_EVENT_NAME,
   body: null,
@@ -856,33 +851,19 @@ const World_step_p2: Body[] = []
 const additions: number[] = []
 const removals: number[] = []
 
-type ContactEvent = {
-  type: 'beginContact' | 'endContact'
-  bodyA: Body | null
-  bodyB: Body | null
-}
-
-type ShapeContactEvent = {
-  type: 'beginShapeContact' | 'endShapeContact'
-  bodyA: Body | null
-  bodyB: Body | null
-  shapeA: Shape | null
-  shapeB: Shape | null
-}
-
-const beginContactEvent: ContactEvent = {
+const beginContactEvent: BeginContactEvent = {
   type: 'beginContact',
   bodyA: null,
   bodyB: null,
 }
 
-const endContactEvent: ContactEvent = {
+const endContactEvent: EndContactEvent = {
   type: 'endContact',
   bodyA: null,
   bodyB: null,
 }
 
-const beginShapeContactEvent: ShapeContactEvent = {
+const beginShapeContactEvent: BeginShapeContactEvent = {
   type: 'beginShapeContact',
   bodyA: null,
   bodyB: null,
@@ -890,7 +871,7 @@ const beginShapeContactEvent: ShapeContactEvent = {
   shapeB: null,
 }
 
-const endShapeContactEvent: ShapeContactEvent = {
+const endShapeContactEvent: EndShapeContactEvent = {
   type: 'endShapeContact',
   bodyA: null,
   bodyB: null,

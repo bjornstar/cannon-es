@@ -3,6 +3,7 @@ import { Broadphase } from '../collision/Broadphase'
 import type { AABB } from '../collision/AABB'
 import type { Body } from '../objects/Body'
 import type { World } from '../world/World'
+import type { AddBodyEvent, RemoveBodyEvent } from '../utils/EventTarget'
 
 type AxisIndex = 0 | 1 | 2
 
@@ -27,8 +28,8 @@ export class SAPBroadphase extends Broadphase {
    */
   axisIndex: AxisIndex
 
-  private _addBodyHandler: (event: { body: Body }) => void
-  private _removeBodyHandler: (event: { body: Body }) => void
+  private _addBodyHandler: (event: AddBodyEvent) => void
+  private _removeBodyHandler: (event: RemoveBodyEvent) => void
 
   /**
    * Check if the bounds of two bodies overlap, along the given SAP axis.
@@ -120,11 +121,12 @@ export class SAPBroadphase extends Broadphase {
 
     const axisList = this.axisList
 
-    this._addBodyHandler = (event: { body: Body }) => {
-      axisList.push(event.body)
+    this._addBodyHandler = (event: AddBodyEvent) => {
+      if (event.body) axisList.push(event.body)
     }
 
-    this._removeBodyHandler = (event: { body: Body }) => {
+    this._removeBodyHandler = (event: RemoveBodyEvent) => {
+      if (!event.body) return
       const idx = axisList.indexOf(event.body)
       if (idx !== -1) {
         axisList.splice(idx, 1)

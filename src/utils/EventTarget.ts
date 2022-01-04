@@ -1,25 +1,77 @@
-type EventType =
-  | 'addBody'
-  | 'beginContact'
-  | 'beginShapeContact'
-  | 'collide'
-  | 'endContact'
-  | 'endShapeContact'
-  | 'removeBody'
-  | 'postStep'
-  | 'preStep'
-  | 'sleep'
-  | 'sleepy'
-  | 'wakeup'
+import type { ContactEquation } from '../equations/ContactEquation'
+import type { Body } from '../objects/Body'
+import type { Shape } from '../shapes/Shape'
 
-type CannonEvent = { type: EventType; target?: EventTarget }
-type EventHandler = (event: CannonEvent) => void
+type AnyObject = Record<PropertyKey, unknown>
+
+export type TypedEvent<T extends EventType, U = AnyObject> = {
+  target?: EventTarget
+  type: T
+} & U
+
+// export type AddBodyEvent = TypedEvent<'addBody'>
+// export type BeginContactEvent = TypedEvent<'beginContact'>
+// export type BeginShapeContactEvent = TypedEvent<'beginShapeContact'>
+// export type CollideEvent = TypedEvent<'collide'>
+// export type EndContactEvent = TypedEvent<'endContact'>
+// export type EndShapeContactEvent = TypedEvent<'endShapeContact'>
+// export type PostStepEvent = TypedEvent<'postStep'>
+// export type PreStepEvent = TypedEvent<'preStep'>
+// export type RemoveBodyEvent = TypedEvent<'removeBody'>
+// export type SleepEvent = TypedEvent<'sleep'>
+// export type SleepyEvent = TypedEvent<'sleepy'>
+// export type WakeupEvent = TypedEvent<'wakeup'>
+
+// export type CannonEvent = AddBodyEvent | BeginContactEvent | BeginShapeContactEvent | CollideEvent | EndContactEvent | EndShapeContactEvent | PostStepEvent | PreStepEvent | RemoveBodyEvent | SleepEvent | SleepyEvent | WakeupEvent
+
+type Events = {
+  addBody: TypedCallback<'addBody', { body: Body | null }>
+  beginContact: TypedCallback<'beginContact', {
+    bodyA: Body | null
+    bodyB: Body | null
+  }>
+  beginShapeContact: TypedCallback<'beginShapeContact', {
+    bodyA: Body | null
+    bodyB: Body | null
+    shapeA: Shape | null
+    shapeB: Shape | null
+  }>
+  collide: TypedCallback<'collide', {
+    body: Body | null
+    contact: ContactEquation | null
+  }>
+  endContact: TypedCallback<'endContact', {
+    bodyA: Body | null
+    bodyB: Body | null
+  }>
+  endShapeContact: TypedCallback<'endShapeContact', {
+    bodyA: Body | null
+    bodyB: Body | null
+    shapeA: Shape | null
+    shapeB: Shape | null
+  }>
+  postStep: TypedCallback<'postStep'>
+  preStep: TypedCallback<'preStep'>
+  removeBody: TypedCallback<'removeBody', { body: Body | null }>
+  sleep: TypedCallback<'sleep'>
+  sleepy: TypedCallback<'sleepy'>
+  wakeup: TypedCallback<'wakeup'>
+}
+type TypedCallback<T extends EventType, U = AnyObject> = (event: { event: T, target?: EventTarget } & U) => void
+
+export type EventType = keyof Events
+
+type EventHandler<T extends EventType> = (event: TypedEvent<T>) => void
+
+type CallbackByType<T extends CannonEvent> = {
+  [K in T['type']]: T extends { type: K } ? EventHandler<T>[] : never
+}
 
 /**
  * Base class for objects that dispatches events.
  */
 export class EventTarget {
-  private _listeners: Record<EventType, EventHandler[]> = {
+  private _listeners: { [T in EventType]: Events[T][] } = {
     addBody: [],
     beginContact: [],
     beginShapeContact: [],
@@ -38,7 +90,7 @@ export class EventTarget {
    * Add an event listener
    * @return The self object, for chainability.
    */
-  addEventListener(type: EventType, listener: EventHandler): EventTarget {
+  addEventListener<T extends EventType>(type: T, listener: Events[T]): EventTarget {
     if (!this._listeners[type].includes(listener)) {
       this._listeners[type].push(listener)
     }
@@ -48,7 +100,7 @@ export class EventTarget {
   /**
    * Check if an event listener is added
    */
-  hasEventListener(type: EventType, listener: EventHandler): boolean {
+  hasEventListener<T extends CannonEvent>(type: T['type'], listener: (event: T) => void): boolean {
     return this._listeners[type].includes(listener)
   }
 
